@@ -4,12 +4,13 @@ import { useState } from 'react';
 
 export default function Home() {
   const [A, setA] = useState(0);
-  const audio = new Audio('/1.mp3');
-  audio.volume = 0.2;
+
 
   const clickBanana = () => {
     setA(A + 1);
     if (A > 100) {
+      const audio = new Audio('/1.mp3');
+      audio.volume = 0.2;
       audio.play();
     }
   };
