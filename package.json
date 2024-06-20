@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "fs": "0.0.1-security",
+    "ip2location-io-nodejs": "^1.0.4",
     "next": "14.2.4",
     "path": "^0.12.7",
     "react": "^18",

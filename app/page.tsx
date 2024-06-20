@@ -9,7 +9,6 @@ export default function Home() {
   const [C, setC] = useState(0.1);
   const [D, setD] = useState('/1.mp3');
   const [S, setS] = useState(0);
-  const [Z, setZ] = useState(0);
   const [viewRef, setViewRef] = useState(0);
 
   useEffect(() => {
@@ -26,15 +25,9 @@ export default function Home() {
   const clickBanana = async () => {
     setA(A + 1);
 
-    if (Z >= 100) {
-      setZ(0);
-      await saveclick(100);
-      const updatedClicks = await getClick();
-      setS(updatedClicks);
-    } else {
-      setZ(Z + 1);
-    }
-
+    await saveclick(1);
+    const updatedClicks = await getClick();
+    setS(updatedClicks);
     const audio = new Audio(D);
     audio.volume = C;
     audio.play();
