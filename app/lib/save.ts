@@ -1,11 +1,11 @@
 "use server";
-import database from '@/app/msdb.save'
+import database from '@/app/msdb.save';
 
-export const saveclick = async (d: number): Promise<void> => {
+export const saveClick = async (d: number): Promise<void> => {
     const dataDB = database('ALL')("ALLCLICK");
     let click = dataDB.find('any');
     click.value = click.value + d;
-    dataDB.save('any', click.value)
+    dataDB.save('any', click.value);
 }
 
 export const getClick = async (): Promise<number> => {
@@ -14,10 +14,27 @@ export const getClick = async (): Promise<number> => {
     return click.value;
 }
 
-export const getViwes = async (): Promise<number> => {
+export const getViews = async (): Promise<number> => {
     const dataDB = database('ALL')("ALLSEE");
     let click = dataDB.find('any');
     click.value = click.value + 1;
-    dataDB.save('any', click.value)
+    dataDB.save('any', click.value);
     return click.value;
+}
+
+export const saveHighScores = async (highScores: HighScore[]): Promise<void> => {
+    const dataDB = database('ALL')("HIGHSCORES");
+    dataDB.save('highScores', highScores);
+}
+
+export const getHighScores = async (): Promise<HighScore[]> => {
+    const dataDB = database('ALL')("HIGHSCORES");
+    const highScores = dataDB.find('highScores');
+    return highScores?.value || [];
+}
+
+interface HighScore {
+    name: string;
+    score: number;
+    spawnRate: number;
 }

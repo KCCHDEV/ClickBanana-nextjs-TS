@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { saveclick, getClick, getViwes } from '@/app/lib/save';
+import { saveClick, getClick, getViews } from '@/app/lib/save';
+import Swal from 'sweetalert2'
 
 export default function Home() {
   const [A, setA] = useState(0);
@@ -12,8 +13,30 @@ export default function Home() {
   const [viewRef, setViewRef] = useState(0);
 
   useEffect(() => {
+    const swalWithBootstrapButtons = Swal.mixin({
+      customClass: {
+        confirmButton: "btn btn-success",
+        cancelButton: "btn btn-danger"
+      },
+      buttonsStyling: false
+    });
+    swalWithBootstrapButtons.fire({
+      title: "มีเกมใหม่มาแล้ว สนใจเล่นรึป่าว",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "ใช่",
+      cancelButtonText: "ไม่",
+      reverseButtons: true
+    }).then((result) => {
+      if (result.isConfirmed) {
+        window.location.href = "/fish"
+      } else if (
+        result.dismiss === Swal.DismissReason.cancel
+      ) {
+      }
+    });
     const fetchData = async () => {
-      const views = await getViwes();
+      const views = await getViews();
       setViewRef((views / 2));
       const initialClicks = await getClick();
       setS(initialClicks);
@@ -25,7 +48,7 @@ export default function Home() {
   const clickBanana = async () => {
     setA(A + 1);
 
-    await saveclick(1);
+    await saveClick(1);
     const updatedClicks = await getClick();
     setS(updatedClicks);
     const audio = new Audio(D);

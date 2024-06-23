@@ -1,6 +1,9 @@
+// Fisher.tsx
 "use client";
 import { useState, useEffect } from 'react';
 import Cookies from 'js-cookie';
+import { saveHighScores, getHighScores } from '@/app/lib/save';
+import Swal from 'sweetalert2'
 
 interface Position {
   top: number;
@@ -14,11 +17,13 @@ interface HighScore {
   spawnRate: number;
 }
 
-const fishIcons = ["🐟", "🐠", "🐡", "🦈", "🦦", "👽", "💀", "👻"];
-const baitIcons = ["🍌", "🍎", "🍇", "🍓", "🍒", "🍍", "🥕", "🍉"];
+const fishIcons = ["🐟", "🐠", "🐡", "🦈", "🦦", "👽", "💀", "👻", "😘", "🥵"];
+const baitIcons = ["🍌", "🍎", "🍇", "🍓", "🍒", "🍍", "🥕", "🍉", "🏳️‍🌈", "🧋", "✈️"];
 const specialFishIcons = [
-  { icon: "🦈", points: 25, size: "text-4xl" },  // Shark
-  { icon: "🐉", points: 25, size: "text-4xl" }   // Dragon
+  { icon: "🦈", points: 25, size: "text-6xl" },
+  { icon: "📦", points: 250, size: "text-6xl" },
+  { icon: "🏢", points: 70, size: "text-6xl" },
+  { icon: "🐉", points: 25, size: "text-6xl" }
 ];
 
 export default function Fisher() {
@@ -29,10 +34,10 @@ export default function Fisher() {
   const [points, setPoints] = useState<number>(0);
   const [speed, setSpeed] = useState<number>(2);
   const [spawnRate, setSpawnRate] = useState<number>(3000);
-  const [baitSize, setBaitSize] = useState<number>(4);
+  const [baitSize, setBaitSize] = useState<number>(2);
   const [name, setName] = useState<string>('');
   const [highScores, setHighScores] = useState<HighScore[]>([]);
-  const [nextSpawnCost, setNextSpawnCost] = useState<number>(50000);
+  const [nextSpawnCost, setNextSpawnCost] = useState<number>(1000);
   const [resetCode, setResetCode] = useState<string>('');
   const [resetInput, setResetInput] = useState<string>('');
   const [resetPromptVisible, setResetPromptVisible] = useState<boolean>(false);
@@ -46,7 +51,6 @@ export default function Fisher() {
     const savedHighScores = Cookies.get('highScores');
     const savedNextSpawnCost = Cookies.get('nextSpawnCost');
     const savedBaitIcon = Cookies.get('baitIcon');
-
     if (savedPoints) setPoints(parseInt(savedPoints));
     if (savedSpeed) setSpeed(parseInt(savedSpeed));
     if (savedSpawnRate) setSpawnRate(parseInt(savedSpawnRate));
@@ -92,7 +96,7 @@ export default function Fisher() {
     const dropBait = () => {
       setBaitPosition((prev) => {
         let newTop = prev.top + speed;
-        if (newTop >= 100) newTop = 0; // Reset position if it reaches the bottom
+        if (newTop >= 100) newTop = 0;
         return { ...prev, top: newTop };
       });
     };
@@ -152,178 +156,239 @@ export default function Fisher() {
   }, [fishPosition]);
 
   const upgradeSpeed = () => {
-    if (points >= 10 && speed < 12) { // Speed cap at 12
-      const newSpeed = speed + 1;
-      setPoints(points - 10);
+    if (points >= 10 && speed < 12) {
+      const newSpeed = speed + 0.5;
+      setPoints((prevPoints) => {
+        const newPoints = prevPoints - 10;
+        Cookies.set('points', newPoints.toString());
+        return newPoints;
+      });
       setSpeed(newSpeed);
       Cookies.set('speed', newSpeed.toString());
-      Cookies.set('points', (points - 10).toString());
-    }
-  };
-
-  const upgradeSpawnRate = () => {
-    if (points >= nextSpawnCost) {
-      const newSpawnRate = Math.max(500, spawnRate - 500);
-      setPoints(points - nextSpawnCost);
-      setSpawnRate(newSpawnRate);
-      setNextSpawnCost(nextSpawnCost * 2);
-      Cookies.set('spawnRate', newSpawnRate.toString());
-      Cookies.set('points', (points - nextSpawnCost).toString());
-      Cookies.set('nextSpawnCost', (nextSpawnCost * 2).toString());
+      Swal.fire({
+        title: "+ speed!",
+        icon: "success"
+      });
     }
   };
 
   const upgradeBaitSize = () => {
-    if (points >= 10) {
-      const newBaitSize = baitSize + 2;
-      setPoints(points - 10);
+    if (points >= 10 && baitSize < 12) {
+      const newBaitSize = baitSize + 1;
+      setPoints((prevPoints) => {
+        const newPoints = prevPoints - 10;
+        Cookies.set('points', newPoints.toString());
+        return newPoints;
+      });
       setBaitSize(newBaitSize);
       Cookies.set('baitSize', newBaitSize.toString());
-      Cookies.set('points', (points - 10).toString());
+      Swal.fire({
+        title: "+ baitSize!",
+        icon: "success"
+      });
     }
   };
 
-  const randomizeBaitIcon = () => {
-    if (points >= 100) {
-      const randomIcon = baitIcons[Math.floor(Math.random() * baitIcons.length)];
-      setPoints(points - 100);
-      setBaitPosition((prev) => ({ ...prev, icon: randomIcon }));
-      Cookies.set('baitIcon', randomIcon);
-      Cookies.set('points', (points - 100).toString());
+  const decreaseSpawnRate = () => {
+    if (points >= nextSpawnCost && spawnRate > 250) {
+      const newSpawnRate = spawnRate - 250;
+      setPoints((prevPoints) => {
+        const newPoints = prevPoints - nextSpawnCost;
+        Cookies.set('points', newPoints.toString());
+        return newPoints;
+      });
+      setSpawnRate(newSpawnRate);
+      setNextSpawnCost(nextSpawnCost * 2);
+      Cookies.set('spawnRate', newSpawnRate.toString());
+      Cookies.set('nextSpawnCost', nextSpawnCost.toString());
+      Swal.fire({
+        title: "+ SpawnRate!",
+        icon: "success"
+      });
     }
   };
 
-  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setName(e.target.value);
-    Cookies.set('name', e.target.value);
+  const changeBaitIcon = () => {
+    const randomIconIndex = Math.floor(Math.random() * baitIcons.length);
+    const newIcon = baitIcons[randomIconIndex];
+    setBaitPosition((prev) => ({ ...prev, icon: newIcon }));
+    Cookies.set('baitIcon', newIcon);
+    Swal.fire({
+      title: "You change bait icon!",
+      icon: "success"
+    });
   };
 
-  const saveHighScore = () => {
-    const newHighScores = [...highScores, { name, score: points, spawnRate }]
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 5);
-    setHighScores(newHighScores);
-    Cookies.set('highScores', JSON.stringify(newHighScores));
+  const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setName(event.target.value);
+    Cookies.set('name', event.target.value);
   };
 
-  const generateResetCode = () => {
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    setResetCode(code);
-    setResetPromptVisible(true);
+  const saveHighScore = async () => {
+    Cookies.set('highScores', JSON.stringify(await getHighScores()));
+    const newScore: HighScore = {
+      name: name,
+      score: points,
+      spawnRate: spawnRate,
+    };
+    const updatedHighScores = [...highScores, newScore].sort((a, b) => b.score - a.score).slice(0, 10);
+    setHighScores(updatedHighScores);
+    await saveHighScores(updatedHighScores);
+    Cookies.set('highScores', JSON.stringify(updatedHighScores));
+    Swal.fire({
+      title: "You save High Score!",
+      icon: "success"
+    });
   };
 
-  const handleReset = () => {
+  const resetGame = async () => {
     if (resetInput === resetCode) {
       setPoints(0);
       setSpeed(2);
       setSpawnRate(3000);
-      setBaitSize(4);
-      setNextSpawnCost(50000);
-      setBaitPosition((prev) => ({ ...prev, icon: "😏" }));
-      Cookies.set('points', '0');
-      Cookies.set('speed', '2');
-      Cookies.set('spawnRate', '3000');
-      Cookies.set('baitSize', '4');
-      Cookies.set('nextSpawnCost', '50000');
-      Cookies.set('baitIcon', '😏');
-      setResetPromptVisible(false);
-      setResetInput('');
+      setBaitSize(2);
+      setNextSpawnCost(1000);
+      setBaitPosition((prev) => ({ ...prev, icon: "🍌" }));
+      Cookies.remove('points');
+      Cookies.remove('speed');
+      Cookies.remove('spawnRate');
+      Cookies.remove('baitSize');
+      Cookies.remove('name');
+      Cookies.remove('nextSpawnCost');
+      Cookies.remove('baitIcon');
     }
+    setResetInput('');
+    setResetPromptVisible(false);
+    Swal.fire({
+      title: "You Reset Data game!",
+      icon: "success"
+    });
   };
 
   return (
-    <main className="relative w-full h-screen bg-blue-200">
-      <div
-        className="absolute bait text-2xl"
-        style={{ top: `${baitPosition.top}%`, left: `${baitPosition.left}%`, width: `${baitSize}px`, height: `${baitSize}px` }}
-      >
-        {baitPosition.icon}
-      </div>
-      {fishPosition.map((fish: any, index) => (
-        <div
-          key={index}
-          className={`absolute w-6 h-6 fish ${fish.size || 'text-2xl'}`}
-          style={{ top: `${fish.top}%`, left: `${fish.left}%` }}
-        >
-          {fish.icon}
-        </div>
-      ))}
-      <div className="absolute bottom-0 left-0 w-full flex justify-between p-4">
-        <button
-          className="bg-gray-700 text-white p-2 rounded"
-          onMouseDown={() => setIsMovingLeft(true)}
-          onMouseUp={() => setIsMovingLeft(false)}
-          onTouchStart={() => setIsMovingLeft(true)}
-          onTouchEnd={() => setIsMovingLeft(false)}
-        >
-          ซ้าย
-        </button>
-        <button
-          className="bg-gray-700 text-white p-2 rounded"
-          onMouseDown={() => setIsMovingRight(true)}
-          onMouseUp={() => setIsMovingRight(false)}
-          onTouchStart={() => setIsMovingRight(true)}
-          onTouchEnd={() => setIsMovingRight(false)}
-        >
-          ขวา
-        </button>
-      </div>
-      <div className="absolute top-0 left-0 p-4">
-        <div className="text-xl text-white">Points: {points}</div>
-        <button className="bg-green-500 text-white p-2 rounded mt-2" onClick={upgradeSpeed}>Upgrade Speed (10 points)</button>
-        <button className="bg-blue-500 text-white p-2 rounded mt-2" onClick={upgradeSpawnRate}>Increase Spawn Rate (Cost: {nextSpawnCost} points)</button>
-        <button className="bg-purple-500 text-white p-2 rounded mt-2" onClick={upgradeBaitSize}>Increase Bait Size (10 points)</button>
-        <button className="bg-orange-500 text-white p-2 rounded mt-2" onClick={randomizeBaitIcon}>Randomize Bait Icon (100 points)</button>
-      </div>
-      <div className="absolute top-16 left-0 p-4">
-        <input
-          type="text"
-          placeholder="Enter your name"
-          value={name}
-          onChange={handleNameChange}
-          className="p-2 rounded"
-        />
-        <button
-          className="bg-yellow-500 text-white p-2 rounded mt-2"
-          onClick={saveHighScore}
-        >
-          Save High Score
-        </button>
-      </div>
-      <div className="absolute top-32 left-0 p-4">
-        <div className="text-xl text-white">High Scores</div>
-        {highScores.map((score, index) => (
-          <div key={index} className="text-white">
-            {index + 1}. {score.name}: {score.score} (Spawn Rate: {score.spawnRate}ms)
-          </div>
-        ))}
-      </div>
-      <div className="absolute top-48 left-0 p-4">
-        <button
-          className="bg-red-500 text-white p-2 rounded"
-          onClick={generateResetCode}
-        >
-          Reset Game
-        </button>
-        {resetPromptVisible && (
-          <div className="mt-2">
-            <div className="text-white">Enter Reset Code: {resetCode}</div>
-            <input
-              type="text"
-              placeholder="Enter reset code"
-              value={resetInput}
-              onChange={(e) => setResetInput(e.target.value)}
-              className="p-2 rounded mt-2"
-            />
+    <div className="relative h-screen bg-blue-500 overflow-hidden">
+      <div className="drawer">
+        <input id="my-drawer" type="checkbox" className="drawer-toggle" />
+        <div className="drawer-content h-screen">
+          <label htmlFor="my-drawer" className="btn btn-primary drawer-button">Open manu</label>
+          <div className="absolute bottom-0 left-0 w-full flex justify-between p-4">
             <button
-              className="bg-red-500 text-white p-2 rounded mt-2"
-              onClick={handleReset}
+              className="bg-gray-700 text-white p-2 rounded"
+              onMouseDown={() => setIsMovingLeft(true)}
+              onMouseUp={() => setIsMovingLeft(false)}
+              onTouchStart={() => setIsMovingLeft(true)}
+              onTouchEnd={() => setIsMovingLeft(false)}
             >
-              Confirm Reset
+              ซ้าย
+            </button>
+            <button
+              className="bg-gray-700 text-white p-2 rounded"
+              onMouseDown={() => setIsMovingRight(true)}
+              onMouseUp={() => setIsMovingRight(false)}
+              onTouchStart={() => setIsMovingRight(true)}
+              onTouchEnd={() => setIsMovingRight(false)}
+            >
+              ขวา
             </button>
           </div>
-        )}
+          <div
+            className={`absolute bait transition bg-white/5`}
+            style={{ top: `${baitPosition.top}%`, left: `${baitPosition.left}%`, fontSize: `${baitSize}em` }}
+          >
+            {baitPosition.icon}
+          </div>
+          {fishPosition.map((fish: any, index) => (
+            <div
+              key={index}
+              className={`absolute bg-white/5 fish transition-all animate__animated animate__bounce duration-200 ${fish.size || ''}`}
+              style={{ top: `${fish.top}%`, left: `${fish.left}%` }}
+            >
+              {fish.icon}
+            </div>
+          ))}
+
+        </div>
+        <div className="drawer-side">
+          <label htmlFor="my-drawer" aria-label="close sidebar" className="drawer-overlay"></label>
+          <div className="menu p-4 w-80 min-h-full bg-base-200 text-base-content flex flex-col gap-5">
+            <button
+              className="bg-gray-800 text-white py-1 px-3 rounded"
+              onClick={upgradeSpeed}
+            >
+              Upgrade Speed (10 points)
+            </button>
+            <button
+              className="bg-gray-800 text-white py-1 px-3 rounded ml-2"
+              onClick={upgradeBaitSize}
+            >
+              Upgrade Bait Size (10 points)
+            </button>
+            <button
+              className="bg-gray-800 text-white py-1 px-3 rounded ml-2"
+              onClick={decreaseSpawnRate}
+            >
+              Decrease Spawn Rate ({nextSpawnCost} points)
+            </button>
+            <button
+              className="bg-gray-800 text-white py-1 px-3 rounded ml-2"
+              onClick={changeBaitIcon}
+            >
+              Change Bait Icon
+            </button>
+            <button
+              className="bg-red-800 text-white py-1 px-3 rounded ml-2"
+              onClick={() => setResetPromptVisible(true)}
+            >
+              Reset Game
+            </button>
+            <input
+              type="text"
+              value={name}
+              onChange={handleNameChange}
+              placeholder="Enter your name"
+              className="py-1 px-3 rounded"
+            />
+            <button
+              className="bg-green-800 text-white py-1 px-3 rounded ml-2"
+              onClick={saveHighScore}
+            >
+              Save High Score
+            </button>
+            <div className='absolute bottom-0 left-0 p-4'>
+              <div className="text-xl text-white">Points: {points}</div>
+              <div className="text-xl text-white">Speed: {speed}</div>
+              <div className="text-xl text-white">Spawn Rate: {spawnRate}ms</div>
+              <div className="text-xl text-white">Bait Size: {baitSize}</div>
+              <div className="text-xl text-white">High Scores</div>
+              {highScores.map((score, index) => (
+                <div key={index} className="text-white">
+                  {index + 1}. {score.name}: {score.score} (Spawn Rate: {score.spawnRate}ms)
+                </div>
+              ))}
+            </div>
+          </div>
+          {resetPromptVisible && (
+            <div className="absolute inset-0 bg-gray-900 bg-opacity-75 flex flex-col items-center justify-center">
+              <div className="bg-white p-8 rounded shadow-md">
+                <div className="text-xl mb-4">Are you sure you want to reset the game?</div>
+                <button
+                  className="bg-red-800 text-white py-1 px-3 rounded mr-2"
+                  onClick={resetGame}
+                >
+                  Confirm Reset
+                </button>
+                <button
+                  className="bg-gray-800 text-white py-1 px-3 rounded"
+                  onClick={() => setResetPromptVisible(false)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
-    </main>
+    </div>
+
   );
 }

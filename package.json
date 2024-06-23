@@ -9,13 +9,15 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "animate.css": "^4.1.1",
     "fs": "0.0.1-security",
     "ip2location-io-nodejs": "^1.0.4",
     "js-cookie": "^3.0.5",
     "next": "14.2.4",
     "path": "^0.12.7",
     "react": "^18",
-    "react-dom": "^18"
+    "react-dom": "^18",
+    "sweetalert2": "^11.12.0"
   },
   "devDependencies": {
     "@types/js-cookie": "^3.0.6",
